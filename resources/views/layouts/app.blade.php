@@ -30,9 +30,6 @@
     
     @include('partials.footer')
     
-    <!-- Toast уведомление -->
-    @include('partials.toast')
-    
     <!-- Наши скрипты -->
     <script src="{{ mix('js/app.js') }}"></script>
     

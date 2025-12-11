@@ -22,7 +22,8 @@ Route::get('/', function () {
     return view('cars.index');
 })->name('cars.index');
 
-// Маршруты для CRUD операций (создадим позже)
+Route::get('/', [CarController::class, 'index'])->name('cars.index');
+
 Route::resource('cars', CarController::class)->except(['index']);
 
 // Для проверки - тестовый маршрут

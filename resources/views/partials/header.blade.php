@@ -12,9 +12,6 @@
                     <a href="{{ route('cars.create') }}" class="btn btn-success px-4 py-2 fs-5">
                         <i class="fas fa-plus me-2"></i>Добавить
                     </a>
-                    <button id="loadBtn" class="btn btn-primary px-4 py-2 fs-5">
-                        <i class="fas fa-download me-2"></i>Загрузить
-                    </button>
                 </div>
             </div>
         </nav>
