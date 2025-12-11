@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@yield('title', 'Отдам даром')</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <title>@yield('title', 'Автомобили')</title>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
@@ -13,22 +15,61 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&display=swap" rel="stylesheet" />
     
-    <!-- Наши стили -->
+    <!-- Bootstrap и наши стили -->
     <link href="{{ mix('css/app.css') }}" rel="stylesheet" />
     
     @stack('styles')
 </head>
 <body>
-    @include('partials.header')
+    @include('layouts.navigation')
     
-    <main class="container my-5">
-        @yield('content')
+    <main class="container py-4">
+        <!-- Уведомления -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show mb-4">
+                <i class="fas fa-check-circle me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
         
-        <!-- Модальное окно -->
-        @include('partials.modal')
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        
+        <!-- Заголовок страницы -->
+        @if(isset($header) && !empty($header))
+            <div class="mb-4">
+                <h1 class="h2 mb-0 text-primary">
+                    <i class="fas fa-car me-2"></i>{{ $header }}
+                </h1>
+                @if(isset($subheader) && !empty($subheader))
+                    <p class="text-muted mt-2">{{ $subheader }}</p>
+                @endif
+            </div>
+        @endif
+        
+        @yield('content')
     </main>
     
-    @include('partials.footer')
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-car me-2"></i>Автомобили</h5>
+                    <p class="mb-0">Система управления автомобилями</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">© {{ date('Y') }} Лабораторная работа №4</p>
+                </div>
+            </div>
+        </div>
+    </footer>
     
     <!-- Наши скрипты -->
     <script src="{{ mix('js/app.js') }}"></script>

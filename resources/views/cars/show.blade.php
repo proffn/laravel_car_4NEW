@@ -3,7 +3,7 @@
 @section('title', $car->brand . ' ' . $car->model)
 
 @section('content')
-<div class="container py-5">
+<div class="py-5">
     <div class="row">
         <!-- Левая колонка: Изображение и основная информация -->
         <div class="col-lg-8">
@@ -55,7 +55,7 @@
                                         </div>
                                         <div class="col-6 mb-2">
                                             <div class="text-muted small">Пробег</div>
-                                            <div class="fw-semibold">{{ $car->formatted_mileage }}</div>
+                                            <div class="fw-semibold">{{ $car->formatted_mileage ?? number_format($car->mileage, 0, ',', ' ') . ' км' }}</div>
                                         </div>
                                         <div class="col-6 mb-2">
                                             <div class="text-muted small">Цвет</div>
@@ -65,6 +65,18 @@
                                             <div class="text-muted small">Тип кузова</div>
                                             <div class="fw-semibold">{{ $car->body_type }}</div>
                                         </div>
+                                        
+                                        <!-- Информация о владельце (для админа) -->
+                                        @auth
+                                            @if(auth()->user()->is_admin && $car->user)
+                                                <div class="col-12 mt-3 pt-3 border-top">
+                                                    <div class="text-muted small">Владелец</div>
+                                                    <div class="fw-semibold">
+                                                        <i class="fas fa-user me-1"></i>{{ $car->user->name }}
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endauth
                                     </div>
                                 </div>
                             </div>
@@ -77,7 +89,7 @@
             <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-header bg-light py-3">
                     <h3 class="h5 mb-0">
-                        <i class="fas fa-align-left me-2 text-primary"></i>Подробное описание объявления
+                        <i class="fas fa-align-left me-2 text-primary"></i>Подробное описание
                     </h3>
                 </div>
                 <div class="card-body p-4">
@@ -105,25 +117,41 @@
                 </div>
                 <div class="card-body p-4">
                     <div class="d-grid gap-3">
-                        <!-- Кнопка "Редактировать" -->
-                        <a href="{{ route('cars.edit', $car) }}" class="btn btn-warning btn-lg py-3">
-                            <i class="fas fa-edit me-2"></i>Редактировать
-                        </a>
-
                         <!-- Кнопка "Назад к списку" -->
                         <a href="{{ route('cars.index') }}" class="btn btn-outline-primary btn-lg py-3">
                             <i class="fas fa-arrow-left me-2"></i>Назад к списку
                         </a>
 
-                        <!-- Кнопка "Удалить" -->
-                        <form action="{{ route('cars.destroy', $car) }}" method="POST" class="d-grid">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-lg py-3" 
-                                    onclick="return confirm('Вы уверены что хотите удалить этот автомобиль?')">
-                                <i class="fas fa-trash-alt me-2"></i>Удалить
-                            </button>
-                        </form>
+                        <!-- Кнопка "Редактировать" (только для владельца или админа) -->
+                        @auth
+                            @if(auth()->user()->is_admin || (auth()->id() == $car->user_id))
+                                <a href="{{ route('cars.edit', $car) }}" class="btn btn-warning btn-lg py-3">
+                                    <i class="fas fa-edit me-2"></i>Редактировать
+                                </a>
+
+                                <!-- Кнопка "Удалить" -->
+                                <form action="{{ route('cars.destroy', $car) }}" method="POST" class="d-grid">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-lg py-3" 
+                                            onclick="return confirm('Вы уверены что хотите удалить этот автомобиль?')">
+                                        <i class="fas fa-trash-alt me-2"></i>Удалить
+                                    </button>
+                                </form>
+                            @endif
+                        @endauth
+                        
+                        <!-- Для гостей -->
+                        @guest
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Для редактирования или удаления автомобиля нужно войти в систему
+                                <div class="mt-2">
+                                    <a href="{{ route('login') }}" class="btn btn-sm btn-primary">Войти</a>
+                                    <a href="{{ route('register') }}" class="btn btn-sm btn-outline-primary ms-1">Регистрация</a>
+                                </div>
+                            </div>
+                        @endguest
                     </div>
                 </div>
             </div>

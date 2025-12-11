@@ -15,6 +15,7 @@ $grid-breakpoints: (
     xxl: 1400px, 
     xxxl: 1500px
 );
+
 $container-max-widths: (
     sm: 540px, 
     md: 720px, 
@@ -24,8 +25,16 @@ $container-max-widths: (
     xxxl: 1600px
 );
 
-// Импорт Bootstrap
-@import "~bootstrap/scss/bootstrap";
+// Импорт Bootstrap с новым синтаксисом @use
+@use "bootstrap/scss/bootstrap" with (
+    $primary: $primary,
+    $secondary: $secondary,
+    $light: $light,
+    $dark: $dark,
+    $gray-600: $gray-600,
+    $grid-breakpoints: $grid-breakpoints,
+    $container-max-widths: $container-max-widths
+);
 
 // Миксины
 @mixin card-shadow {
@@ -39,12 +48,6 @@ $container-max-widths: (
 }
 
 // Стили
-#myToast {
-    min-width: 300px;
-    font-size: 1.1rem;
-    padding: 1rem 1.25rem;
-}
-
 .car-card {
     transition: all 0.3s ease;
     cursor: pointer;

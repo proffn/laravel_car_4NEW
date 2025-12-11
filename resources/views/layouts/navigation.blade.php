@@ -1,0 +1,93 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container">
+        <!-- Логотип и бренд -->
+        <a class="navbar-brand d-flex align-items-center" href="{{ route('cars.index') }}">
+            <i class="fas fa-car fa-2x me-2"></i>
+            <div>
+                <span class="fs-3 fw-bold">Автомобили</span>
+                <small class="d-block text-white-50">Лабораторная работа №4</small>
+            </div>
+        </a>
+
+        <!-- Кнопка для мобильной версии -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Навигационное меню -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('cars.index') ? 'active' : '' }}" 
+                       href="{{ route('cars.index') }}">
+                        <i class="fas fa-list me-1"></i>Все автомобили
+                    </a>
+                </li>
+                
+                @auth
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('cars.create') ? 'active' : '' }}" 
+                           href="{{ route('cars.create') }}">
+                            <i class="fas fa-plus-circle me-1"></i>Добавить автомобиль
+                        </a>
+                    </li>
+                    
+                    @if(auth()->user()->is_admin)
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('cars.trash') ? 'active' : '' }}" 
+                               href="{{ route('cars.trash') }}">
+                                <i class="fas fa-trash-restore me-1"></i>Корзина
+                            </a>
+                        </li>
+                    @endif
+                @endauth
+            </ul>
+
+            <!-- Правая часть навигации -->
+            <ul class="navbar-nav ms-auto">
+                @auth
+                    <!-- Dropdown пользователя -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2 fs-5"></i>
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold">{{ Auth::user()->name }}</span>
+                                <small class="text-white-50">
+                                    @if(Auth::user()->is_admin)
+                                        <span class="badge bg-danger">Администратор</span>
+                                    @else
+                                        Пользователь
+                                    @endif
+                                </small>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="{{ route('dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Панель управления
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form method="POST" action="{{ route('logout') }}" class="dropdown-item">
+                                @csrf
+                                <button type="submit" class="btn btn-link text-decoration-none p-0">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                @else
+                    <!-- Ссылки для неавторизованных -->
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light me-2" href="{{ route('login') }}">
+                            <i class="fas fa-sign-in-alt me-2"></i>Войти
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-light" href="{{ route('register') }}">
+                            <i class="fas fa-user-plus me-2"></i>Регистрация
+                        </a>
+                    </li>
+                @endauth
+            </ul>
+        </div>
+    </div>
+</nav>

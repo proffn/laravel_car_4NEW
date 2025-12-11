@@ -2,73 +2,92 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class Car extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
-    // Поля которые можно массово назначать
     protected $fillable = [
         'brand',
-        'model',
+        'model', 
         'year',
         'mileage',
         'color',
         'body_type',
+        'image',
         'detailed_description',
-        'image'
+        'user_id'
     ];
 
-    // Приведение типов
-    protected $casts = [
-        'year' => 'integer',
-        'mileage' => 'integer'
-    ];
-
-    // АКСЕССОР: полное название автомобиля (Toyota Camry (2018))
-    public function getFullNameAttribute()
-    {
-        return $this->brand . ' ' . $this->model . ' (' . $this->year . ')';
-    }
-
-    // URL изображения
-    public function getImageUrlAttribute()
-    {
-        if (!$this->image) {
-            // Если изображения нет - возвращаем путь к дефолтной картинке
-            return asset('images/no-image.jpg'); //  файл no-image.jpg  в public/images/
-        }
-        
-        // Используем Storage::url() - это правильный способ в Laravel
-        return Storage::url($this->image);
-    }
-
-    // АКСЕССОР: форматированный пробег (85 000 км)
-    public function getFormattedMileageAttribute()
-    {
-        return number_format($this->mileage, 0, ',', ' ') . ' км';
-    }
-
-    // МУТАТОР: приводим год к integer
-    public function setYearAttribute($value)
-    {
-        $this->attributes['year'] = (int) $value;
-    }
-
-    // МУТАТОР: приводим пробег к integer
-    public function setMileageAttribute($value)
-    {
-        $this->attributes['mileage'] = (int) $value;
-    }
-
-    // МУТАТОР: очищаем HTML теги для безопасности
+    // Мутаторы
     public function setDetailedDescriptionAttribute($value)
     {
-        // Разрешаем только безопасные теги для popover
-        $allowedTags = '<span><strong><em><br><p><div><i>';
-        $this->attributes['detailed_description'] = strip_tags($value, $allowedTags);
+        // Очищаем от HTML тегов
+        $this->attributes['detailed_description'] = strip_tags($value);
+    }
+
+    public function getFormattedMileageAttribute()
+    {
+        return number_format($this->mileage, 0, '.', ' ') . ' км';
+    }
+
+    public function getImageUrlAttribute()
+    {
+        if ($this->image && Storage::disk('public')->exists($this->image)) {
+            return Storage::disk('public')->url($this->image);
+        }
+        return asset('images/no-image.jpg');
+    }
+
+    // Связь с пользователем
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // Проверка, является ли пользователь владельцем
+    public function isOwnedBy(User $user)
+    {
+        return $this->user_id === $user->id;
+    }
+
+    // ✅ Events/Closures для проверки прав на уровне модели
+    protected static function booted()
+    {
+        // Closure для проверки доступа при сохранении
+        static::saving(function ($car) {
+            // Если автомобиль уже существует (обновление)
+            if ($car->exists) {
+                $user = Auth::user();
+                
+                // Проверяем права через Gate
+                if ($user && !$user->can('update', $car)) {
+                    abort(403, 'У вас нет прав для изменения этого автомобиля');
+                }
+            }
+        });
+
+        // Closure для проверки доступа при удалении
+        static::deleting(function ($car) {
+            $user = Auth::user();
+            
+            // Если мягкое удаление и пользователь не админ
+            if (!$car->isForceDeleting()) {
+                if ($user && !$user->can('delete', $car)) {
+                    abort(403, 'У вас нет прав для удаления этого автомобиля');
+                }
+            }
+            // Если полное удаление
+            else {
+                if ($user && !$user->can('forceDelete', $car)) {
+                    abort(403, 'У вас нет прав для полного удаления этого автомобиля');
+                }
+            }
+        });
     }
 }

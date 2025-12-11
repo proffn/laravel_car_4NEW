@@ -3,129 +3,228 @@
 namespace App\Http\Controllers;
 
 use App\Models\Car;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class CarController extends Controller
 {
-    // Показать все автомобили (главная страница)
+    // Главная страница - ВСЕ автомобили для всех пользователей
     public function index()
     {
-        $cars = Car::latest()->get();
-        return view('cars.index', compact('cars'));
+        // По заданию: все пользователи (гости, обычные, админы) видят ВСЕ машины
+        $cars = Car::with('user')->latest()->get();
+        
+        return view('cars.index', [
+            'cars' => $cars,
+            'header' => 'Автомобили'
+        ]);
     }
 
-    // Показать форму создания
+    // Список всех пользователей (требование расширенного уровня)
+    public function users()
+    {
+        $users = User::withCount('cars')->get();
+        
+        return view('users.index', [
+            'users' => $users,
+            'header' => 'Список пользователей'
+        ]);
+    }
+
+    // Автомобили конкретного пользователя по username
+    public function userCars($username)
+    {
+        $user = User::where('name', $username)->firstOrFail();
+        $cars = $user->cars()->latest()->get();
+        
+        return view('cars.user-index', [
+            'cars' => $cars,
+            'user' => $user,
+            'header' => 'Автомобили пользователя: ' . $user->name
+        ]);
+    }
+
+    // Форма создания
     public function create()
     {
-        return view('cars.create');
+        // Проверяем авторизацию
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Для добавления автомобиля нужно войти в систему');
+        }
+        
+        return view('cars.create', [
+            'header' => 'Добавить автомобиль'
+        ]);
     }
 
-    // Сохранить новый автомобиль (с валидацией)
+    // Сохранение нового автомобиля
     public function store(Request $request)
     {
-        // ВАЛИДАЦИЯ С ИСПРАВЛЕНИЕМ ДЛЯ PNG
+        // Проверяем авторизацию
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Для добавления автомобиля нужно войти в систему');
+        }
+        
         $validated = $request->validate([
-            'brand' => 'required|string|max:50',
-            'model' => 'required|string|max:50',
+            'brand' => 'required|max:255',
+            'model' => 'required|max:255',
             'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'mileage' => 'required|integer|min:0',
-            'color' => 'required|string|max:30',
-            'body_type' => 'required|string|in:Седан,Универсал,Хэтчбек,Внедорожник,Купе,Минивэн,Пикап',
-            'detailed_description' => 'required|string|min:10',
-            // ИСПРАВЛЕНИЕ: убрали 'image', оставили только проверку по расширению
-            'image' => 'nullable|mimes:jpeg,jpg,png,gif,webp,bmp|max:5120'
+            'color' => 'required|max:50',
+            'body_type' => 'required|in:Седан,Универсал,Хэтчбек,Внедорожник,Купе,Минивэн,Пикап',
+            'image' => 'nullable|image|max:2048',
+            'detailed_description' => 'required',
         ]);
 
         // Обработка изображения
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            
-            // Безопасное имя файла (убираем русские буквы и пробелы)
-            $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $image->getClientOriginalExtension();
-            $safeName = str_replace([' ', '_'], '-', $originalName); // заменяем пробелы и подчеркивания
-            $imageName = time() . '_' . $safeName . '.' . $extension;
-            
-            $path = $image->storeAs('cars', $imageName, 'public');
+            $path = $request->file('image')->store('cars', 'public');
             $validated['image'] = $path;
         }
 
-        // Создаем автомобиль
+        // Добавляем user_id текущего пользователя
+        $validated['user_id'] = auth()->id();
+        
         Car::create($validated);
-
-        return redirect()->route('cars.index')
-            ->with('success', 'Автомобиль успешно добавлен!');
+        
+        return redirect()->route('cars.index')->with('success', 'Автомобиль успешно добавлен!');
     }
 
-    // Показать детальную информацию об автомобиле
+    // Просмотр деталей
     public function show(Car $car)
     {
-        return view('cars.show', compact('car'));
+        return view('cars.show', [
+            'car' => $car,
+            'header' => $car->brand . ' ' . $car->model
+        ]);
     }
 
-    // Показать форму редактирования
+    // Форма редактирования
     public function edit(Car $car)
     {
-        return view('cars.edit', compact('car'));
+        // Проверяем авторизацию
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Для редактирования нужно войти в систему');
+        }
+        
+        // Проверяем права: редактировать может только владелец или администратор
+        if ($car->user_id !== auth()->id() && !(auth()->user()->is_admin ?? false)) {
+            abort(403, 'У вас нет прав для редактирования этого автомобиля');
+        }
+        
+        return view('cars.edit', [
+            'car' => $car,
+            'header' => 'Редактировать: ' . $car->brand . ' ' . $car->model
+        ]);
     }
 
-    // Обновить автомобиль (с валидацией)
+    // Обновление
     public function update(Request $request, Car $car)
     {
-        // ВАЛИДАЦИЯ С ИСПРАВЛЕНИЕМ ДЛЯ PNG
+        // Проверяем авторизацию
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Для редактирования нужно войти в систему');
+        }
+        
+        // Проверяем права: редактировать может только владелец или администратор
+        if ($car->user_id !== auth()->id() && !(auth()->user()->is_admin ?? false)) {
+            abort(403, 'У вас нет прав для редактирования этого автомобиля');
+        }
+        
         $validated = $request->validate([
-            'brand' => 'required|string|max:50',
-            'model' => 'required|string|max:50',
+            'brand' => 'required|max:255',
+            'model' => 'required|max:255',
             'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'mileage' => 'required|integer|min:0',
-            'color' => 'required|string|max:30',
-            'body_type' => 'required|string|in:Седан,Универсал,Хэтчбек,Внедорожник,Купе,Минивэн,Пикап',
-            'detailed_description' => 'required|string|min:10',
-            // ИСПРАВЛЕНИЕ: убрали 'image', оставили только проверку по расширению
-            'image' => 'nullable|mimes:jpeg,jpg,png,gif,webp,bmp|max:5120'
+            'color' => 'required|max:50',
+            'body_type' => 'required|in:Седан,Универсал,Хэтчбек,Внедорожник,Купе,Минивэн,Пикап',
+            'image' => 'nullable|image|max:2048',
+            'detailed_description' => 'required',
         ]);
 
-        // Обработка нового изображения
+        // Обновление изображения
         if ($request->hasFile('image')) {
-            // Удаляем старое изображение если оно есть
-            if ($car->image && Storage::disk('public')->exists($car->image)) {
+            // Удаляем старое изображение
+            if ($car->image) {
                 Storage::disk('public')->delete($car->image);
             }
             
-            $image = $request->file('image');
-            
-            // Безопасное имя файла
-            $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $image->getClientOriginalExtension();
-            $safeName = str_replace([' ', '_'], '-', $originalName);
-            $imageName = time() . '_' . $safeName . '.' . $extension;
-            
-            $path = $image->storeAs('cars', $imageName, 'public');
+            $path = $request->file('image')->store('cars', 'public');
             $validated['image'] = $path;
-        } else {
-            // Если новое изображение не загружено - сохраняем старое
-            $validated['image'] = $car->image;
         }
 
-        // Обновляем автомобиль
         $car->update($validated);
-
-        return redirect()->route('cars.show', $car)
-            ->with('success', 'Автомобиль успешно обновлен!');
+        
+        return redirect()->route('cars.show', $car)->with('success', 'Автомобиль успешно обновлен!');
     }
 
-    // Удалить автомобиль (мягкое удаление)
+    // Удаление (мягкое)
     public function destroy(Car $car)
     {
-        // Удаляем изображение при удалении записи (опционально)
-        if ($car->image && Storage::disk('public')->exists($car->image)) {
-            Storage::disk('public')->delete($car->image);
+        // Проверяем авторизацию
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Для удаления нужно войти в систему');
+        }
+        
+        // Проверяем права: удалять может только владелец или администратор
+        if ($car->user_id !== auth()->id() && !(auth()->user()->is_admin ?? false)) {
+            abort(403, 'У вас нет прав для удаления этого автомобиля');
         }
         
         $car->delete();
         
-        return redirect()->route('cars.index')
-            ->with('success', 'Автомобиль успешно удален!');
+        return redirect()->route('cars.index')->with('success', 'Автомобиль удален!');
+    }
+
+    // Корзина (только для админа)
+    public function trash()
+    {
+        // Проверяем что пользователь админ
+        if (!auth()->check() || !(auth()->user()->is_admin ?? false)) {
+            abort(403, 'Доступ только для администраторов');
+        }
+        
+        $cars = Car::onlyTrashed()->with('user')->get();
+        
+        return view('cars.trash', [
+            'cars' => $cars,
+            'header' => 'Корзина удаленных автомобилей'
+        ]);
+    }
+
+    // Восстановление
+    public function restore($id)
+    {
+        // Проверяем что пользователь админ
+        if (!auth()->check() || !(auth()->user()->is_admin ?? false)) {
+            abort(403, 'Доступ только для администраторов');
+        }
+        
+        $car = Car::withTrashed()->findOrFail($id);
+        $car->restore();
+        
+        return redirect()->route('cars.trash')->with('success', 'Автомобиль восстановлен!');
+    }
+
+    // Полное удаление
+    public function forceDelete($id)
+    {
+        // Проверяем что пользователь админ
+        if (!auth()->check() || !(auth()->user()->is_admin ?? false)) {
+            abort(403, 'Доступ только для администраторов');
+        }
+        
+        $car = Car::withTrashed()->findOrFail($id);
+        
+        // Удаляем изображение
+        if ($car->image) {
+            Storage::disk('public')->delete($car->image);
+        }
+        
+        $car->forceDelete();
+        
+        return redirect()->route('cars.trash')->with('success', 'Автомобиль полностью удален!');
     }
 }
