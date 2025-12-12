@@ -32,7 +32,7 @@ class CheckDatabase extends Command
             $this->line("   - {$car->brand} {$car->model}: user_id = {$car->user_id} (владелец: {$owner})");
         }
         
-        // Обновляем администратора если нужно
+        // Обновляем администратора
         if ($users->count() > 0) {
             $this->info("\n3. ОБНОВЛЕНИЕ ПРАВ:");
             User::where('email', 'admin@example.com')->update(['is_admin' => true]);

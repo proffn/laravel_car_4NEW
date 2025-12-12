@@ -16,7 +16,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'is_admin', // ← ДОБАВИТЬ!
+        'is_admin', 
     ];
 
     protected $hidden = [
@@ -26,10 +26,10 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'is_admin' => 'boolean', // ← ДОБАВИТЬ!
+        'is_admin' => 'boolean', 
     ];
 
-    // Связь с автомобилями ← ДОБАВИТЬ!
+    // Связь с автомобилями
     public function cars()
     {
         return $this->hasMany(Car::class);

@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Storage;
 
 class CarController extends Controller
 {
-    // Главная страница - ВСЕ автомобили для всех пользователей
+    // Главная страница - все автомобили для всех пользователей
     public function index()
     {
-        // По заданию: все пользователи (гости, обычные, админы) видят ВСЕ машины
+        // По заданию: все пользователи (гости, обычные, админы) видят все машины
         $cars = Car::with('user')->latest()->get();
         
         return view('cars.index', [
@@ -22,7 +22,7 @@ class CarController extends Controller
         ]);
     }
 
-    // Список всех пользователей (требование расширенного уровня)
+    // Список всех пользователей
     public function users()
     {
         $users = User::withCount('cars')->get();

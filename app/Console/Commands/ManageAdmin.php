@@ -79,7 +79,7 @@ class ManageAdmin extends Command
                 $user->id,
                 $user->name,
                 $user->email,
-                $user->is_admin ? ' ДА' : ' нет',
+                $user->is_admin ? ' да' : ' нет',
                 $user->cars()->count(),
                 $user->created_at->format('d.m.Y')
             ];
@@ -169,7 +169,7 @@ class ManageAdmin extends Command
         $user = User::find($userId);
         
         // Нельзя снять админку с самого себя
-        if ($user->id === 1) { // ID 1 обычно первый пользователь
+        if ($user->id === 1) { 
             $this->error(' Нельзя снять права с главного администратора (ID 1)!');
             return;
         }

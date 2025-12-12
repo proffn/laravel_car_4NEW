@@ -68,9 +68,9 @@ class CreateTestData extends Command
             'user_id' => $user->id,
         ]);
 
-        $this->info('✓ Администратор создан: admin@example.com / password');
-        $this->info('✓ Пользователь создан: user@example.com / password');
-        $this->info('✓ Автомобилей создано: ' . Car::count());
+        $this->info(' Администратор создан: admin@example.com / password');
+        $this->info(' Пользователь создан: user@example.com / password');
+        $this->info(' Автомобилей создано: ' . Car::count());
         
         return Command::SUCCESS;
     }

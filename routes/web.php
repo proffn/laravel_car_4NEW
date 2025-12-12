@@ -19,10 +19,10 @@ require __DIR__.'/auth.php';
 // Маршруты автомобилей
 Route::resource('cars', CarController::class);
 
-// ✅ Список всех пользователей (расширенный уровень)
+//  Список всех пользователей
 Route::get('/users', [CarController::class, 'users'])->name('users.index');
 
-// ✅ Автомобили конкретного пользователя по username
+//  Автомобили конкретного пользователя по username
 Route::get('users/{username}/cars', [CarController::class, 'userCars'])
     ->name('users.cars');
 
@@ -30,5 +30,5 @@ Route::get('users/{username}/cars', [CarController::class, 'userCars'])
 Route::middleware(['auth', 'can:admin-access'])->group(function () {
     Route::get('admin/trash', [CarController::class, 'trash'])->name('cars.trash');
     Route::post('admin/cars/{id}/restore', [CarController::class, 'restore'])->name('cars.restore');
-    Route::delete('admin/cars/{id}/force-delete', [CarController::class, 'forceDelete'])->name('cars.force-delete'); // ← ИСПРАВЬТЕ!
+    Route::delete('admin/cars/{id}/force-delete', [CarController::class, 'forceDelete'])->name('cars.force-delete'); 
 });

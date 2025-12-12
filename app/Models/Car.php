@@ -59,7 +59,6 @@ public function getImageUrlAttribute()
             return asset('storage/cars/' . $filename);
         }
         
-        // 3. Если путь содержит 'cars/', пробуем без него
         if (strpos($this->image, 'cars/') === 0) {
             $cleanName = substr($this->image, 5);
             return asset('storage/cars/' . $cleanName);
@@ -80,12 +79,12 @@ public function getImageUrlAttribute()
         return $this->user_id === $user->id;
     }
 
-    // ✅ Events/Closures для проверки прав на уровне модели
+    // Events/Closures для проверки прав на уровне модели
     protected static function booted()
     {
         // Closure для проверки доступа при сохранении
         static::saving(function ($car) {
-            // Если автомобиль уже существует (обновление)
+            // Если автомобиль уже существует
             if ($car->exists) {
                 $user = Auth::user();
                 
