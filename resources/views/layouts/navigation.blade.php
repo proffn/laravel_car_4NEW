@@ -2,10 +2,12 @@
     <div class="container">
         <!-- Логотип и бренд -->
         <a class="navbar-brand d-flex align-items-center" href="{{ route('cars.index') }}">
-            <i class="fas fa-car fa-2x me-2"></i>
+            <img src="{{ asset('images/logo.png') }}" 
+                alt="Логотип" 
+                style="height: 60px; width: auto;" 
+                class="me-2">
             <div>
-                <span class="fs-3 fw-bold">Автомобили</span>
-                <small class="d-block text-white-50">Лабораторная работа №4</small>
+                <span class="fs-5 fw-bold">Доска объявлений "Отдам даром"</span>
             </div>
         </a>
 

@@ -58,17 +58,25 @@
     
     <!-- Footer -->
     <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5><i class="fas fa-car me-2"></i>Автомобили</h5>
-                    <p class="mb-0">Система управления автомобилями</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0">© {{ date('Y') }} Лабораторная работа №4</p>
-                </div>
-            </div>
+        <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center">
+        <p class="mb-2 mb-sm-0 text-center text-sm-start fw-medium">
+            Работу выполнил: <span class="fw-bold">Рафаилов Никита</span>
+        </p>
+        <div class="d-flex gap-3 justify-content-center justify-content-sm-end">
+            <a href="#" class="text-dark fs-4">
+                <img src="{{ asset('images/facebooklogoincircularbuttonoutlinedsocialsymbol_79822.png') }}" 
+                     alt="Facebook" width="30" height="30">
+            </a>
+            <a href="#" class="text-dark fs-4">
+                <img src="{{ asset('images/Twitter_Rounded_icon-icons.com_61577.png') }}" 
+                     alt="Twitter" width="30" height="30">
+            </a>
+            <a href="#" class="text-dark fs-4">
+                <img src="{{ asset('images/instagram_icon-icons.com_65435.png') }}" 
+                     alt="Instagram" width="30" height="30">
+            </a>
         </div>
+    </div>
     </footer>
     
     <!-- Наши скрипты -->

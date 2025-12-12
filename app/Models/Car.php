@@ -36,14 +36,38 @@ class Car extends Model
         return number_format($this->mileage, 0, '.', ' ') . ' км';
     }
 
-    public function getImageUrlAttribute()
-    {
-        if ($this->image && Storage::disk('public')->exists($this->image)) {
-            return Storage::disk('public')->url($this->image);
+public function getImageUrlAttribute()
+{
+    if ($this->image) {
+        // Пробуем найти файл в разных местах
+        $filename = basename($this->image);
+        
+        // 1. В public/storage/cars/
+        $publicPath = 'storage/cars/' . $filename;
+        if (file_exists(public_path($publicPath))) {
+            return asset($publicPath);
         }
-        return asset('images/no-image.jpg');
+        
+        // 2. В storage/app/public/cars/
+        $storagePath = storage_path('app/public/cars/' . $filename);
+        if (file_exists($storagePath)) {
+            // Копируем в public/storage/cars/
+            $destPath = public_path('storage/cars/' . $filename);
+            if (!file_exists($destPath)) {
+                copy($storagePath, $destPath);
+            }
+            return asset('storage/cars/' . $filename);
+        }
+        
+        // 3. Если путь содержит 'cars/', пробуем без него
+        if (strpos($this->image, 'cars/') === 0) {
+            $cleanName = substr($this->image, 5);
+            return asset('storage/cars/' . $cleanName);
+        }
     }
-
+    
+    return asset('images/no-image.jpg');
+}
     // Связь с пользователем
     public function user()
     {
